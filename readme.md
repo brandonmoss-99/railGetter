@@ -27,7 +27,7 @@ Required:
 
 Optional:
 
-`-n`: Max number of next train times to fetch. (Min=1, Max=20, Default=5)
+`-n` or `--next`: Max number of next train times to fetch. (Min=1, Max=20, Default=5)
 
 ### Example
 
