@@ -1,6 +1,6 @@
 # railGetter
 
-railGetter is a Python script for retrieving & displaying upcoming train times for a specified station using National Rail's OpenLDBWS API.
+railGetter is a Python script for retrieving & displaying upcoming train times for a specified station in the United Kingdom using National Rail's OpenLDBWS API.
 
 ## Dependencies
 
