@@ -148,9 +148,10 @@ def printMessages(res, wrapwidth):
 					"", messageText)
 				messageText = messageText.replace("</A>", "")
 
-				wrappedText = textwrap.wrap(messageText, wrapwidth)
+				msgPadding = 10
+				wrappedText = textwrap.wrap(messageText, wrapwidth-msgPadding)
 				for line in wrappedText:
-					print(line)
+					print(" "*msgPadding + line.lstrip(' '))
 				print("\n")
 		except:
 			print("Error printing station messages!")
