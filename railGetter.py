@@ -120,7 +120,7 @@ def printScreen(res, wrapwidth):
 		except AttributeError:
 			print("There are no trains running at this station!")
 
-def resetScreen(t, wrapwidth, res):
+def resetScreen(t, wrapwidth, res, colon):
 	stationNameLength = len(res.locationName)
 	
 	# get character spaces left to pad with '=' by removing length of the
@@ -138,9 +138,15 @@ def resetScreen(t, wrapwidth, res):
 	else:
 		print("="*int((freeSpaceStation-1)/2), "RAILGETTER -",res.locationName.upper(),"="*int((freeSpaceStation+1)/2))
 	if freeSpaceTime % 2 == 0:
-		print("="*int(freeSpaceTime/2), time.strftime("%H:%M:%S", t), "="*int(freeSpaceTime/2))
+		if colon:
+			print("="*int(freeSpaceTime/2), time.strftime("%H:%M:%S", t), "="*int(freeSpaceTime/2))
+		else:
+			print("="*int(freeSpaceTime/2), time.strftime("%H:%M %S", t), "="*int(freeSpaceTime/2))
 	else:
-		print("="*int((freeSpaceTime-1)/2), time.strftime("%H:%M:%S", t), "="*int((freeSpaceTime+1)/2))
+		if colon:
+			print("="*int((freeSpaceTime-1)/2), time.strftime("%H:%M:%S", t), "="*int((freeSpaceTime+1)/2))
+		else:
+			print("="*int((freeSpaceTime-1)/2), time.strftime("%H:%M %S", t), "="*int((freeSpaceTime+1)/2))
 
 
 if __name__ == '__main__':
@@ -208,18 +214,26 @@ if __name__ == '__main__':
 		# update the info
 
 		currentInfo = None
+		colon = True # should be colon be shown in the time display
 		
 		while True:
-			#fetch from API
+			# fetch from API
 
 			t = time.localtime()
-			#Check if there is something to receive from the pipe
+			# Check if there is something to receive from the pipe
 
 			if pipe1.poll():
 				res = pipe1.recv() # Get the results from the pipe
 				currentInfo = res # Make copy of fetched data
 
-			resetScreen(t, wrapwidth, res)
+			# alternate the colon display each refresh
+			if colon:
+				resetScreen(t, wrapwidth, res, colon)
+				colon = False
+			else:
+				resetScreen(t, wrapwidth, res, colon)
+				colon = True
+
 			printScreen(currentInfo, wrapwidth)
 			time.sleep(1)
 				
