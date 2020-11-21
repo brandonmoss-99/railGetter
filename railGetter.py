@@ -161,11 +161,7 @@ def checkIfMessages(res):
 	# check if there are station messages to display, returns True or False
 	if res is not None:
 		try:
-			messages = res.nrccMessages.message
-			if len(messages) > 0:
-				return True
-			else:
-				return False
+			return True if len(res.nrccMessages.message) > 0 else False
 		except:
 			return False
 
