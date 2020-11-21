@@ -2,8 +2,7 @@ from zeep import Client
 from zeep import xsd
 from zeep.plugins import HistoryPlugin
 from multiprocessing import Pipe, Process
-import sys, getopt, time, textwrap
-import re
+import sys, getopt, time, textwrap, re
 
 # Made railGetter a class to simplify multhreading, 
 # program still runs as normal
@@ -206,7 +205,7 @@ def getHelp():
 		print("\nList of options:\n\n"+
 			"(s)tation to fetch train times from [3 letter station code]\n"+
 			"(t)oken to use for connection [token]\n"+
-			"max (n)umber of next trains to fetch [1-20], default=5\n"+
+			"max (n)umber of next trains to fetch [1-10], default=5\n"+
 			"\nExample of usage:\n\n"+
 			"rail.py -s PAD -t aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee -n 10\n"+
 			"Gets next 10 trains from London Paddington")
@@ -252,8 +251,8 @@ if __name__ == '__main__':
 	# make sure the no. trains to fetch isn't abusing any OpenLDBWS limits
 	if numberNextTrains < 1:
 		numberNextTrains = 1
-	elif numberNextTrains > 20:
-		numberNextTrains = 20
+	elif numberNextTrains > 10:
+		numberNextTrains = 10
 
 	if stationToCheck is not None and LDB_TOKEN is not None:
 		# create a pipe, to send stuff between threads
