@@ -75,21 +75,23 @@ def printScreen(res, wrapwidth):
 		try:
 			# get the list of train services
 			services = res.trainServices.service
-
+			
 			# for each service, get the calling points list and print
 			# the platform, time and status (on-time/delayed), train
 			# operator and the stations along the service
 			i = 0
 			while i < len(services):
 				callingPoints = services[i].subsequentCallingPoints.callingPointList
-				print("\n" + services[i].std, "to", services[i].destination.location[0].locationName, "     ")
+				print("\n" + services[i].std, "to", services[i].destination.location[0].locationName, end=" ")
+				if isinstance(services[i].destination.location[0].via, str):
+					print(services[i].destination.location[0].via, end=" ")
 
 				# if the platform number is a string, print it, otherwise just
 				# print '-' to represent N/A, unknown or other
 				if isinstance(services[i].platform, str):
-					print("Plat " + services[i].platform, end=" ")
+					print("\nPlat " + services[i].platform, end=" ")
 				else:
-					print("Plat -", end=" ")
+					print("\nPlat -", end=" ")
 				if services[i].etd != "On time":
 					print("Exp:", end=" ")
 				print(services[i].etd)
@@ -202,7 +204,12 @@ if __name__ == '__main__':
 		p = Process(target=R_getter.run, args=()) # Create a process with target being the function we want to run in the thread
 		p.start() # start the thread
 
-		time.sleep(5)
+		# wait x seconds when the program is started until the first info
+		# is displayed, to make sure some data has been recieved before trying
+		# to process and display the data response. 
+		safeWaitTime = 5
+		print("Waiting", safeWaitTime, "seconds for an initial data response...")
+		time.sleep(safeWaitTime)
 
 		t = time.localtime()
 
