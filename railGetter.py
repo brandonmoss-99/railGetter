@@ -42,8 +42,9 @@ class railGetter:
 		# attempt connection to the API, return the API response on success,
 		# otherwise return an error message and exit program with error status
 		try:
-			res = client.service.GetDepBoardWithDetails(numRows=numberNextTrains,
-				crs=stationToCheck, _soapheaders=[header_value])
+			res = (client.service.GetDepBoardWithDetails(
+				numRows=numberNextTrains,
+				crs=stationToCheck, _soapheaders=[header_value]))
 		except:
 			print("Error fetching train times! Check your token is correct!")
 			sys.exit(1)
@@ -54,10 +55,10 @@ class railGetter:
 	# national rail and sends them to the main thread
 	def run(self):
 		while True:
-			self.res = self.getNextTrains(self.station, self.token, self.train_n)
+			self.res = (self.getNextTrains(self.station,
+				self.token, self.train_n))
 			self.pipe.send(self.res)
 			time.sleep(self.delay)
-
 
 
 def printScreen(res, wrapwidth):
@@ -73,7 +74,8 @@ def printScreen(res, wrapwidth):
 			# the platform, time and status (on-time/delayed), train
 			# operator and the stations along the service
 			for i in range(0, len(services)):
-				callingPoints = services[i].subsequentCallingPoints.callingPointList
+				callingPoints = (services[i].subsequentCallingPoints.
+					callingPointList)
 				print("\n" + services[i].std, "to",
 					services[i].destination.location[0].locationName, end=" ")
 				if isinstance(services[i].destination.location[0].via, str):
@@ -100,10 +102,13 @@ def printScreen(res, wrapwidth):
 					# if more than 1 station, append each but the last to
 					# a string to be wrapped at the end
 					if len(callingPoints[0].callingPoint) > 1:
-						for x in range(0,len(callingPoints[0].callingPoint)-1):
-							toPrint += callingPoints[0].callingPoint[x].locationName + ", "
+						for x in range(0,
+							len(callingPoints[0].callingPoint)-1):
+								toPrint += (callingPoints[0].callingPoint[x].
+									locationName) + ", "
 					# append the last/only service station to the string
-					toPrint += callingPoints[0].callingPoint[-1].locationName + ".\n"
+					toPrint += (callingPoints[0].callingPoint[-1].
+						locationName) + ".\n"
 
 					# wrap the string to a max number of characters. Returns a
 					# list of strings representing each line's output to print
@@ -119,6 +124,7 @@ def printScreen(res, wrapwidth):
 						"coaches.\n")
 		except AttributeError:
 			print("There are no trains running at this station!")
+
 
 def printMessages(res, wrapwidth):
 	if res is not None:
@@ -149,6 +155,7 @@ def printMessages(res, wrapwidth):
 				print("\n")
 		except:
 			print("Error printing station messages!")
+
 
 def checkIfMessages(res):
 	# check if there are station messages to display, returns True or False
@@ -197,6 +204,7 @@ def resetScreen(t, wrapwidth, res, colon):
 			print("="*int((freeSpaceTime-1)/2), time.strftime("%H:%M %S", t),
 			"="*int((freeSpaceTime+1)/2))
 
+
 def getHelp():
 		# print help information, then quit
 		print("\nList of options:\n\n"+
@@ -207,6 +215,7 @@ def getHelp():
 			"rail.py -s PAD -t aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee -n 10\n"+
 			"Gets next 10 trains from London Paddington")
 		sys.exit(0)
+
 
 if __name__ == '__main__':
 	LDB_TOKEN = None # National Rail OpenLDBWS token
