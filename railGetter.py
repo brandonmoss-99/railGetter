@@ -5,7 +5,8 @@ from multiprocessing import Pipe, Process
 import sys, getopt, time, textwrap
 import re
 
-#Made railGetter a class to simplify multhreading, program still runs as normal
+# Made railGetter a class to simplify multhreading, 
+# program still runs as normal
 class railGetter:
 
 	def __init__(self, token, station, pipe, trains_n = 5, delay=20):
@@ -15,25 +16,13 @@ class railGetter:
 		self.pipe = pipe
 		self.train_n = trains_n
 		self.delay = delay
-		
-	
-
-	def getHelp(self):
-		# print help information, then quit
-		print("\nList of options:\n\n"+
-			"(s)tation to fetch train times from [3 letter station code]\n"+
-			"(t)oken to use for connection [token]\n"+
-			"max (n)umber of next trains to fetch [1-20], default=5\n"+
-			"\nExample of usage:\n\n"+
-			"rail.py -s PAD -t aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee -n 10\n"+
-			"Gets next 10 trains from London Paddington")
-		sys.exit(0)
 
 	def getNextTrains(self, stationToCheck, LDB_TOKEN, numberNextTrains):
 
 		# current WSDL version. Available from 
 		# https://lite.realtime.nationalrail.co.uk/OpenLDBWS/
-		WSDL = 'https://lite.realtime.nationalrail.co.uk/OpenLDBWS/wsdl.aspx?ver=2017-10-01'
+		WSDL = ('https://lite.realtime.nationalrail.co.uk/'
+			'OpenLDBWS/wsdl.aspx?ver=2017-10-01')
 
 		history = HistoryPlugin()
 
@@ -43,7 +32,8 @@ class railGetter:
 			'{http://thalesgroup.com/RTTI/2013-11-28/Token/types}AccessToken',
 			xsd.ComplexType([
 				xsd.Element(
-					'{http://thalesgroup.com/RTTI/2013-11-28/Token/types}TokenValue',
+					'{http://thalesgroup.com/'
+					'RTTI/2013-11-28/Token/types}TokenValue',
 					xsd.String()),
 			])
 		)
@@ -52,14 +42,16 @@ class railGetter:
 		# attempt connection to the API, return the API response on success,
 		# otherwise return an error message and exit program with error status
 		try:
-			res = client.service.GetDepBoardWithDetails(numRows=numberNextTrains, crs=stationToCheck, _soapheaders=[header_value])
+			res = client.service.GetDepBoardWithDetails(numRows=numberNextTrains,
+				crs=stationToCheck, _soapheaders=[header_value])
 		except:
 			print("Error fetching train times! Check your token is correct!")
 			sys.exit(1)
 
 		return res
 
-	#This is the thread that we want to run, it gets the updates from national rail and sends them to the main thread
+	# This is the thread that we want to run, it gets the updates from
+	# national rail and sends them to the main thread
 	def run(self):
 		while True:
 			self.res = self.getNextTrains(self.station, self.token, self.train_n)
@@ -80,10 +72,10 @@ def printScreen(res, wrapwidth):
 			# for each service, get the calling points list and print
 			# the platform, time and status (on-time/delayed), train
 			# operator and the stations along the service
-			i = 0
-			while i < len(services):
+			for i in range(0, len(services)):
 				callingPoints = services[i].subsequentCallingPoints.callingPointList
-				print("\n" + services[i].std, "to", services[i].destination.location[0].locationName, end=" ")
+				print("\n" + services[i].std, "to",
+					services[i].destination.location[0].locationName, end=" ")
 				if isinstance(services[i].destination.location[0].via, str):
 					print(services[i].destination.location[0].via, end=" ")
 
@@ -97,7 +89,7 @@ def printScreen(res, wrapwidth):
 					print("Exp:", end=" ")
 				print(services[i].etd)
 
-				# check if service has been cancelled and output cancelled if so,
+				# check if service is cancelled and output cancelled if so,
 				# otherwise print the train operator and the service stations
 				if services[i].etd == "Cancelled":
 					print("This was a", services[i].operator, "service.\n")
@@ -105,26 +97,26 @@ def printScreen(res, wrapwidth):
 					print("This is a", services[i].operator, "service.")
 					toPrint = "Calling at: "
 					x = 0
-					# if more than 1 service station, append each but the last to
+					# if more than 1 station, append each but the last to
 					# a string to be wrapped at the end
 					if len(callingPoints[0].callingPoint) > 1:
-						while x < len(callingPoints[0].callingPoint)-1:
-							toPrint = toPrint + callingPoints[0].callingPoint[x].locationName + ", "
-							x = x + 1
+						for x in range(0,len(callingPoints[0].callingPoint)-1):
+							toPrint += callingPoints[0].callingPoint[x].locationName + ", "
 					# append the last/only service station to the string
-					toPrint = toPrint + callingPoints[0].callingPoint[-1].locationName + ".\n"
+					toPrint += callingPoints[0].callingPoint[-1].locationName + ".\n"
 
 					# wrap the string to a max number of characters. Returns a
-					# list of strings which represents each line's output to print
+					# list of strings representing each line's output to print
 					wrappedText = textwrap.wrap(toPrint, wrapwidth)
 					for line in wrappedText:
 						print(line)
 
-					# get the number of coaches for each train service, if available
-					if isinstance(services[i].length, str) and services[i].length > 0:
-						print("This train has", services[i].length, "coaches.\n")
-				# increment i to move onto the next train service
-				i += 1
+					# get the number of coaches for each train service, 
+					# if available
+					if isinstance(
+						services[i].length,str) and services[i].length > 0:
+						print("This train has", services[i].length,
+						"coaches.\n")
 		except AttributeError:
 			print("There are no trains running at this station!")
 
@@ -146,7 +138,9 @@ def printMessages(res, wrapwidth):
 
 				# use regex to strip any opening HTML a tags with blanks,
 				# as per OpenLDBWS's guidelines
-				messageText = re.sub(r'<A\s+(?:[^>]*?\s+)?href=(["\'])(.*?)\1>', "", messageText)
+				messageText = re.sub(
+					r'<A\s+(?:[^>]*?\s+)?href=(["\'])(.*?)\1>',
+					"", messageText)
 				messageText = messageText.replace("</A>", "")
 
 				wrappedText = textwrap.wrap(messageText, wrapwidth)
@@ -156,8 +150,8 @@ def printMessages(res, wrapwidth):
 		except:
 			print("Error printing station messages!")
 
-# check if there are station messages to display, returns True or False
 def checkIfMessages(res):
+	# check if there are station messages to display, returns True or False
 	if res is not None:
 		try:
 			messages = res.nrccMessages.message
@@ -171,7 +165,7 @@ def checkIfMessages(res):
 
 def resetScreen(t, wrapwidth, res, colon):
 	stationNameLength = len(res.locationName)
-	
+
 	# get character spaces left to pad with '=' by removing length of the
 	# station name/time and the other characters also displayed on the line
 	freeSpaceStation = wrapwidth - stationNameLength - 15
@@ -183,31 +177,51 @@ def resetScreen(t, wrapwidth, res, colon):
 	# try to print so the title and time are centered, but if not possible
 	# then print the extra character on the right side of the line
 	if freeSpaceStation % 2 == 0:
-		print("="*int(freeSpaceStation/2), "RAILGETTER -",res.locationName.upper(),"="*int(freeSpaceStation/2))
+		print("="*int(freeSpaceStation/2), "RAILGETTER -",
+			res.locationName.upper(),"="*int(freeSpaceStation/2))
 	else:
-		print("="*int((freeSpaceStation-1)/2), "RAILGETTER -",res.locationName.upper(),"="*int((freeSpaceStation+1)/2))
+		print("="*int((freeSpaceStation-1)/2), "RAILGETTER -",
+			res.locationName.upper(),"="*int((freeSpaceStation+1)/2))
 	if freeSpaceTime % 2 == 0:
 		if colon:
-			print("="*int(freeSpaceTime/2), time.strftime("%H:%M:%S", t), "="*int(freeSpaceTime/2))
+			print("="*int(freeSpaceTime/2), time.strftime("%H:%M:%S", t),
+			"="*int(freeSpaceTime/2))
 		else:
-			print("="*int(freeSpaceTime/2), time.strftime("%H:%M %S", t), "="*int(freeSpaceTime/2))
+			print("="*int(freeSpaceTime/2), time.strftime("%H:%M %S", t),
+			"="*int(freeSpaceTime/2))
 	else:
 		if colon:
-			print("="*int((freeSpaceTime-1)/2), time.strftime("%H:%M:%S", t), "="*int((freeSpaceTime+1)/2))
+			print("="*int((freeSpaceTime-1)/2), time.strftime("%H:%M:%S", t),
+			"="*int((freeSpaceTime+1)/2))
 		else:
-			print("="*int((freeSpaceTime-1)/2), time.strftime("%H:%M %S", t), "="*int((freeSpaceTime+1)/2))
+			print("="*int((freeSpaceTime-1)/2), time.strftime("%H:%M %S", t),
+			"="*int((freeSpaceTime+1)/2))
 
+def getHelp():
+		# print help information, then quit
+		print("\nList of options:\n\n"+
+			"(s)tation to fetch train times from [3 letter station code]\n"+
+			"(t)oken to use for connection [token]\n"+
+			"max (n)umber of next trains to fetch [1-20], default=5\n"+
+			"\nExample of usage:\n\n"+
+			"rail.py -s PAD -t aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee -n 10\n"+
+			"Gets next 10 trains from London Paddington")
+		sys.exit(0)
 
 if __name__ == '__main__':
-	LDB_TOKEN = None #National Rail OpenLDBWS token
-	stationToCheck = None #which station to check
-	numberNextTrains = 5 #fetch 5 next trains by default
-
+	LDB_TOKEN = None # National Rail OpenLDBWS token
+	stationToCheck = None # which station to check
+	numberNextTrains = 5 # fetch 5 next trains by default
+	wrapwidth = 80 # how many characters wide to print text before wrapping
+	timesDisplayDuration = 20 # duration to display train times (seconds)
+	msgDisplayDuration = 10 # duration to display messages (seconds)
+	updateDelay = 20 # how long to keep data before re-requesting (seconds)
 	argv = sys.argv[1:]
 
 	# try getting supported parameters and args from command line
 	try:
-		opts, args = getopt.getopt(argv, "s:t:n:", ["station=", "token=", "next=", "help"])
+		opts, args = getopt.getopt(argv, "s:t:n:",
+			["station=", "token=", "next=", "help"])
 	except:
 		print("Error parsing options")
 		getHelp()
@@ -220,7 +234,6 @@ if __name__ == '__main__':
 			except:
 				print("Error parsing station name!")
 				getHelp()
-
 		if opt in ['-t', '--token']:
 			LDB_TOKEN = arg
 		if opt in ['-n', '--next']:
@@ -231,54 +244,46 @@ if __name__ == '__main__':
 		if opt in ['--help']:
 			getHelp()
 
-
-
-	#make sure the number of trains to fetch isn't abusing any OpenLDBWS limits
+	# make sure the no. trains to fetch isn't abusing any OpenLDBWS limits
 	if numberNextTrains < 1:
 		numberNextTrains = 1
 	elif numberNextTrains > 20:
 		numberNextTrains = 20
 
 	if stationToCheck is not None and LDB_TOKEN is not None:
-
-
-		#create a pipe, to send stuff between threads
+		# create a pipe, to send stuff between threads
 		pipe1, pipe2 = Pipe()
-
-		wrapwidth = 80 # how many characters wide to print text before wrapping
-
-		R_getter = railGetter(LDB_TOKEN, stationToCheck, pipe2, trains_n = numberNextTrains, delay = 20) #create an instance of the class
-		p = Process(target=R_getter.run, args=()) # Create a process with target being the function we want to run in the thread
+		# create an instance of the class
+		R_getter = railGetter(LDB_TOKEN, stationToCheck, pipe2, 
+			trains_n = numberNextTrains, delay = updateDelay)
+		# Create a process with target being the function we want to run
+		# in the thread
+		p = Process(target=R_getter.run, args=())
 		p.start() # start the thread
 
 		# wait x seconds when the program is started until the first info
 		# is displayed, to make sure some data has been recieved before trying
 		# to process and display the data response. 
 		safeWaitTime = 5
-		print("Waiting", safeWaitTime, "seconds for an initial data response...")
+		print("Waiting", safeWaitTime, 
+			"seconds for an initial data response...")
 		time.sleep(safeWaitTime)
 
 		t = time.localtime()
-
-		currentInfo = None
 		colon = True # should be colon be shown in the time display
 
-		# loop until program is manually quit. Fetch the next train times from API
-		# and make a copy of it to be used in a loop without constantly fetching
-		# from the API and exceeding their access limits. For x seconds, print
-		# the last requested API data along with the current time, updating every
-		# second, until x seconds has passed and another API request is made to
-		# update the info
+		# loop until program is manually quit. Every x seconds, fetch the next
+		# train times from API. For x seconds, print the last requested API
+		# data along with the current time, updating every second, until x
+		# seconds has passed & another API request is made to update the info
 		
 		while True:
-
-			for i in range(0,20):
+			for i in range(0,timesDisplayDuration):
 				t = time.localtime()
 
 				# Check if there is something to receive from the pipe
 				if pipe1.poll():
 					res = pipe1.recv() # Get the results from the pipe
-					currentInfo = res # Make copy of fetched data
 
 				# alternate the colon display each refresh
 				if colon:
@@ -288,17 +293,16 @@ if __name__ == '__main__':
 					resetScreen(t, wrapwidth, res, colon)
 					colon = True
 
-				printScreen(currentInfo, wrapwidth)
+				printScreen(res, wrapwidth)
 				time.sleep(1)
 
 			if checkIfMessages(res):
-				for i in range(0, 10):
+				for i in range(0, msgDisplayDuration):
 					t = time.localtime()
 
 					# Check if there is something to receive from the pipe
 					if pipe1.poll():
 						res = pipe1.recv() # Get the results from the pipe
-						currentInfo = res # Make copy of fetched data
 
 					# alternate the colon display each refresh
 					if colon:
@@ -307,10 +311,9 @@ if __name__ == '__main__':
 					else:
 						resetScreen(t, wrapwidth, res, colon)
 						colon = True
-					printMessages(currentInfo, wrapwidth)
+					printMessages(res, wrapwidth)
 					time.sleep(1)
 				
-
 	elif LDB_TOKEN is None:
 		print("Token not given!")
 	else:
