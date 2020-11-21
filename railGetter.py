@@ -3,6 +3,7 @@ from zeep import xsd
 from zeep.plugins import HistoryPlugin
 from multiprocessing import Pipe, Process
 import sys, getopt, time, textwrap
+import re
 
 #Made railGetter a class to simplify multhreading, program still runs as normal
 class railGetter:
@@ -75,7 +76,7 @@ def printScreen(res, wrapwidth):
 		try:
 			# get the list of train services
 			services = res.trainServices.service
-			
+
 			# for each service, get the calling points list and print
 			# the platform, time and status (on-time/delayed), train
 			# operator and the stations along the service
@@ -112,15 +113,61 @@ def printScreen(res, wrapwidth):
 							x = x + 1
 					# append the last/only service station to the string
 					toPrint = toPrint + callingPoints[0].callingPoint[-1].locationName + ".\n"
+
 					# wrap the string to a max number of characters. Returns a
 					# list of strings which represents each line's output to print
 					wrappedText = textwrap.wrap(toPrint, wrapwidth)
 					for line in wrappedText:
 						print(line)
+
+					# get the number of coaches for each train service, if available
+					if isinstance(services[i].length, str) and services[i].length > 0:
+						print("This train has", services[i].length, "coaches.\n")
 				# increment i to move onto the next train service
 				i += 1
 		except AttributeError:
 			print("There are no trains running at this station!")
+
+def printMessages(res, wrapwidth):
+	if res is not None:
+		try:
+			# get the list of important departure board messages
+			messages = res.nrccMessages.message
+			print("\n")
+
+			for message in messages:
+				# get the message text
+				messageText = message._value_1
+
+				# replace any HTML p tags with newlines, as per OpenLDBWS's
+				# guidelines
+				messageText = messageText.replace("<P>", "\n")
+				messageText = messageText.replace("</P>", "\n")
+
+				# use regex to strip any opening HTML a tags with blanks,
+				# as per OpenLDBWS's guidelines
+				messageText = re.sub(r'<A\s+(?:[^>]*?\s+)?href=(["\'])(.*?)\1>', "", messageText)
+				messageText = messageText.replace("</A>", "")
+
+				wrappedText = textwrap.wrap(messageText, wrapwidth)
+				for line in wrappedText:
+					print(line)
+				print("\n")
+		except:
+			print("Error printing station messages!")
+
+# check if there are station messages to display, returns True or False
+def checkIfMessages(res):
+	if res is not None:
+		try:
+			messages = res.nrccMessages.message
+			if len(messages) > 0:
+				return True
+			else:
+				return False
+		except:
+			return False
+
 
 def resetScreen(t, wrapwidth, res, colon):
 	stationNameLength = len(res.locationName)
@@ -213,36 +260,55 @@ if __name__ == '__main__':
 
 		t = time.localtime()
 
+		currentInfo = None
+		colon = True # should be colon be shown in the time display
+
 		# loop until program is manually quit. Fetch the next train times from API
 		# and make a copy of it to be used in a loop without constantly fetching
 		# from the API and exceeding their access limits. For x seconds, print
 		# the last requested API data along with the current time, updating every
 		# second, until x seconds has passed and another API request is made to
 		# update the info
-
-		currentInfo = None
-		colon = True # should be colon be shown in the time display
 		
 		while True:
-			# fetch from API
 
-			t = time.localtime()
-			# Check if there is something to receive from the pipe
+			for i in range(0,20):
+				t = time.localtime()
 
-			if pipe1.poll():
-				res = pipe1.recv() # Get the results from the pipe
-				currentInfo = res # Make copy of fetched data
+				# Check if there is something to receive from the pipe
+				if pipe1.poll():
+					res = pipe1.recv() # Get the results from the pipe
+					currentInfo = res # Make copy of fetched data
 
-			# alternate the colon display each refresh
-			if colon:
-				resetScreen(t, wrapwidth, res, colon)
-				colon = False
-			else:
-				resetScreen(t, wrapwidth, res, colon)
-				colon = True
+				# alternate the colon display each refresh
+				if colon:
+					resetScreen(t, wrapwidth, res, colon)
+					colon = False
+				else:
+					resetScreen(t, wrapwidth, res, colon)
+					colon = True
 
-			printScreen(currentInfo, wrapwidth)
-			time.sleep(1)
+				printScreen(currentInfo, wrapwidth)
+				time.sleep(1)
+
+			if checkIfMessages(res):
+				for i in range(0, 10):
+					t = time.localtime()
+
+					# Check if there is something to receive from the pipe
+					if pipe1.poll():
+						res = pipe1.recv() # Get the results from the pipe
+						currentInfo = res # Make copy of fetched data
+
+					# alternate the colon display each refresh
+					if colon:
+						resetScreen(t, wrapwidth, res, colon)
+						colon = False
+					else:
+						resetScreen(t, wrapwidth, res, colon)
+						colon = True
+					printMessages(currentInfo, wrapwidth)
+					time.sleep(1)
 				
 
 	elif LDB_TOKEN is None:
