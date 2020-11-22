@@ -130,6 +130,7 @@ def printMessages(res, wrapwidth):
 		try:
 			# get the list of important departure board messages
 			messages = res.nrccMessages.message
+			msgPadding = 10
 			print("\n")
 
 			for message in messages:
@@ -148,8 +149,8 @@ def printMessages(res, wrapwidth):
 					"", messageText)
 				messageText = messageText.replace("</A>", "")
 
-				msgPadding = 10
-				wrappedText = textwrap.wrap(messageText, wrapwidth-msgPadding)
+				wrappedText = textwrap.wrap(messageText, wrapwidth
+					-(msgPadding*2))
 				for line in wrappedText:
 					print(" "*msgPadding + line.lstrip(' '))
 				print("\n")
