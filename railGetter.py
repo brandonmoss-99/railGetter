@@ -73,54 +73,67 @@ def printScreen(res, wrapwidth):
 			# the platform, time and status (on-time/delayed), train
 			# operator and the stations along the service
 			for i in range(0, len(services)):
+				destInfo = ""
+				platInfo = ""
+				toPrint = ""
+				screenPadding = 5
+
 				callingPoints = (services[i].subsequentCallingPoints.
 					callingPointList)
-				print("\n" + services[i].std, "to",
-					services[i].destination.location[0].locationName, end=" ")
+				destInfo += ("\n" + str(services[i].std) + " to " +
+					str(services[i].destination.location[0].locationName))
 				if isinstance(services[i].destination.location[0].via, str):
-					print(services[i].destination.location[0].via, end=" ")
+					destInfo += (" " + 
+						str(services[i].destination.location[0].via))
+				destInfo += (" (" + str(services[i].operator) + ") ")
 
 				# if the platform number is a string, print it, otherwise just
-				# print '-' to represent N/A, unknown or other
+				# print '-' to represent N/A, unknown or other 
 				if isinstance(services[i].platform, str):
-					print("\nPlat " + services[i].platform, end=" ")
+					platInfo += ("Plat " + str(services[i].platform) + " ")
 				else:
-					print("\nPlat -", end=" ")
+					platInfo += ("Plat - ")
 				if services[i].etd != "On time":
-					print("Exp:", end=" ")
-				print(services[i].etd)
+					platInfo += ("Exp: ")
+				platInfo += str(services[i].etd + "\n")
 
-				# check if service is cancelled and output cancelled if so,
-				# otherwise print the train operator and the service stations
-				if services[i].etd == "Cancelled":
-					print("This was a", services[i].operator, "service.\n")
+				# try and have the platform info on the same line as
+				# the time and destination, but move underneath if
+				# it will exceed the max width of the display
+				if(len(platInfo) + len(destInfo) > wrapwidth):
+					platInfo = "\n" + platInfo
 				else:
-					print("This is a", services[i].operator, "service.")
-					toPrint = "Calling at: "
-					x = 0
-					# if more than 1 station, append each but the last to
-					# a string to be wrapped at the end
-					if len(callingPoints[0].callingPoint) > 1:
-						for x in range(0,
-							len(callingPoints[0].callingPoint)-1):
-								toPrint += (callingPoints[0].callingPoint[x].
-									locationName) + ", "
-					# append the last/only service station to the string
-					toPrint += (callingPoints[0].callingPoint[-1].
-						locationName) + ".\n"
+					pSpace = wrapwidth - len(destInfo) + 2
+					pAlign = pSpace - len(platInfo)
+					platInfo = " "*pAlign + platInfo
 
-					# wrap the string to a max number of characters. Returns a
-					# list of strings representing each line's output to print
-					wrappedText = textwrap.wrap(toPrint, wrapwidth)
-					for line in wrappedText:
-						print(line)
+				toPrint += ("Calling at: ")
+				x = 0
+				# if more than 1 station, append each but the last to
+				# a string to be wrapped at the end
+				if len(callingPoints[0].callingPoint) > 1:
+					for x in range(0,
+						len(callingPoints[0].callingPoint)-1):
+							toPrint += (str(callingPoints[0].callingPoint[x].
+								locationName) + ", ")
+				# append the last/only service station to the string
+				toPrint += (str(callingPoints[0].callingPoint[-1].
+					locationName) + ".\n")
 
-					# get the number of coaches for each train service, 
-					# if available
-					if isinstance(
-						services[i].length,str) and services[i].length > 0:
-						print("This train has", services[i].length,
-						"coaches.\n")
+				print(" "*screenPadding + destInfo + platInfo, end="")
+				# wrap the string to a max number of characters. Returns a
+				# list of strings representing each line's output to print
+				wrappedText = textwrap.wrap(toPrint, 
+					wrapwidth - (2*screenPadding))
+				for line in wrappedText:
+					print(" "*screenPadding + line)
+
+				# get the number of coaches for each train service, 
+				# if available
+				if isinstance(
+					services[i].length,str) and services[i].length > 0:
+					print("This train has", services[i].length,
+					"coaches.")
 		except AttributeError:
 			print("There are no trains running at this station!")
 
