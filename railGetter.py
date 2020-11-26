@@ -76,7 +76,7 @@ def printScreen(res, wrapwidth):
 				destInfo = ""
 				platInfo = ""
 				toPrint = ""
-				screenPadding = 5
+				screenPadding = 6
 
 				callingPoints = (services[i].subsequentCallingPoints.
 					callingPointList)
