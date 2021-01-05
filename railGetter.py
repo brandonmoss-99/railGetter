@@ -152,8 +152,14 @@ def printMessages(res, wrapwidth):
 
 				# replace any HTML p tags with newlines, as per OpenLDBWS's
 				# guidelines
-				messageText = messageText.replace("<P>", "\n")
-				messageText = messageText.replace("</P>", "\n")
+				for r in (("<P>", "\n"), ("<p>", "\n"), ("</P>", "\n"), 
+					("</p>", "\n")):
+					# *r means to unpack the contents of r, each list item
+					# is sent separately instead of together. i.e:
+					# (("<P>", "\n"), ("<p>", "\n")) will be sent as
+					# ("<P>", "\n") and then ("<p>", "\n") after, instead
+					# of as (("<P>", "\n"), ("<p>", "\n"))
+					messageText = messageText.replace(*r)
 
 				# use regex to strip any opening HTML a tags with blanks,
 				# as per OpenLDBWS's guidelines
