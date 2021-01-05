@@ -60,20 +60,21 @@ class railGetter:
 			time.sleep(self.delay)
 
 
-class screen():
-	#def __init__(self):
+class screen:
+	def __init__(self, wrapwidth):
+		self.wrapwidth = wrapwidth
 
 	def clearScreen(self):
 		print("\u001b[H", end="") # move cursor to top left (1,1)
 		print("\u001b[0J", end="") # clear screen after cursor (whole screen)
 
-	def printTop(self, t, wrapwidth, res, colon):
+	def printTop(self, t, res, colon):
 		stationNameLength = len(res.locationName)
 
 		# get character spaces left to pad with '=' by removing length of the
 		# station name/time and the other characters also displayed on the line
-		freeSpaceStation = wrapwidth - stationNameLength - 15
-		freeSpaceTime = wrapwidth - 10
+		freeSpaceStation = self.wrapwidth - stationNameLength - 15
+		freeSpaceTime = self.wrapwidth - 10
 
 		# try to print so the title and time are centered, but if not possible
 		# then print the extra character on the right side of the line
@@ -98,7 +99,7 @@ class screen():
 				print("="*int((freeSpaceTime-1)/2), time.strftime("%H:%M %S", t),
 				"="*int((freeSpaceTime+1)/2))
 
-	def printMessages(self, res, wrapwidth):
+	def printMessages(self, res):
 		if res is not None:
 			try:
 				# get the list of important departure board messages
@@ -128,7 +129,7 @@ class screen():
 						"", messageText)
 					messageText = messageText.replace("</A>", "")
 
-					wrappedText = textwrap.wrap(messageText, wrapwidth
+					wrappedText = textwrap.wrap(messageText, self.wrapwidth
 						-(msgPadding*2))
 					for line in wrappedText:
 						print(" "*msgPadding + line.lstrip(' '))
@@ -136,7 +137,7 @@ class screen():
 			except:
 				print("Error printing station messages!")
 
-	def printTrains(self, res, wrapwidth):
+	def printTrains(self, res):
 		# try to output all of the train information, or output a message
 		# if there is an attribute warning (no info/no trains running)
 		if res is not None:
@@ -178,10 +179,10 @@ class screen():
 						# try and have the platform info on the same line as
 						# the time and destination, but move underneath if
 						# it will exceed the max width of the display
-						if(len(platInfo) + len(destInfo) > wrapwidth):
+						if(len(platInfo) + len(destInfo) > self.wrapwidth):
 							platInfo = "\n" + platInfo
 						else:
-							pSpace = wrapwidth - len(destInfo) + 2
+							pSpace = self.wrapwidth - len(destInfo) + 2
 							pAlign = pSpace - len(platInfo)
 							platInfo = " "*pAlign + platInfo
 
@@ -205,7 +206,7 @@ class screen():
 						# title showing 'On time', by wrapping to width of program -
 						# screen padding applied to left side - 16 chars
 						wrappedText = textwrap.wrap(toPrint, 
-							wrapwidth - screenPadding - 16)
+							self.wrapwidth - screenPadding - 16)
 						for line in wrappedText:
 							print(" "*screenPadding + line)
 
@@ -221,8 +222,8 @@ class screen():
 			# print blank line at bottom for spacing
 			print()
 
-	def printBottom(self, wrapwidth):
-		print("="*wrapwidth)
+	def printBottom(self):
+		print("="*self.wrapwidth)
 
 
 
@@ -252,7 +253,7 @@ if __name__ == '__main__':
 	LDB_TOKEN = None # National Rail OpenLDBWS token
 	stationToCheck = None # which station to check
 	numberNextTrains = 5 # fetch 5 next trains by default
-	wrapwidth = 80 # how many characters wide to print text before wrapping
+	width = 80 # how many characters wide to print text before wrapping
 	timesDisplayDuration = 20 # duration to display train times (seconds)
 	msgDisplayDuration = 10 # duration to display messages (seconds)
 	updateDelay = 20 # how long to keep data before re-requesting (seconds)
@@ -301,7 +302,7 @@ if __name__ == '__main__':
 		p = Process(target=R_getter.run, args=())
 		p.start() # start the thread
 
-		tScreen = screen() # create new terminal screen
+		tScreen = screen(wrapwidth=width) # create new terminal screen
 
 		# wait x seconds when the program is started until the first info
 		# is displayed, to make sure some data has been recieved before trying
@@ -330,14 +331,14 @@ if __name__ == '__main__':
 				tScreen.clearScreen()
 				# alternate the colon display each refresh
 				if colon:
-					tScreen.printTop(t, wrapwidth, res, colon)
+					tScreen.printTop(t, res, colon)
 					colon = False
 				else:
-					tScreen.printTop(t, wrapwidth, res, colon)
+					tScreen.printTop(t, res, colon)
 					colon = True
 
-				tScreen.printTrains(res, wrapwidth)
-				tScreen.printBottom(wrapwidth)
+				tScreen.printTrains(res)
+				tScreen.printBottom()
 				time.sleep(1)
 
 			if checkIfMessages(res):
@@ -351,14 +352,14 @@ if __name__ == '__main__':
 					tScreen.clearScreen()
 					# alternate the colon display each refresh
 					if colon:
-						tScreen.printTop(t, wrapwidth, res, colon)
+						tScreen.printTop(t, res, colon)
 						colon = False
 					else:
-						tScreen.printTop(t, wrapwidth, res, colon)
+						tScreen.printTop(t, res, colon)
 						colon = True
 
-					tScreen.printMessages(res, wrapwidth)
-					tScreen.printBottom(wrapwidth)
+					tScreen.printMessages(res)
+					tScreen.printBottom()
 					time.sleep(1)
 				
 	elif LDB_TOKEN is None:
