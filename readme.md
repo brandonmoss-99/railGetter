@@ -47,5 +47,8 @@ or
 $ python3 railGetter.py -s BRI -t aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee -n 5
 ```
 
+![Screenshot of train times](/images/railgetter1.png)
+![Screenshot of station messages](/images/railgetter2.png)
+
 ## Compatibility
 These files were only written as a personal test project, and designed to work on my MacOS machine (MacOS 10.14.6) for the Bash shell. I haven't tested its functionality for anything else, I imagine it should also work on Linux as well as other shells with some minor issues, but not Windows, unless ran through WSL.
