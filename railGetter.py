@@ -180,7 +180,7 @@ class screen:
 						# the time and destination, but move underneath if
 						# it will exceed the max width of the display
 						if(len(platInfo) + len(destInfo) > self.wrapwidth):
-							platInfo = "\n" + platInfo
+							platInfo = "\n" + " "*(self.wrapwidth - len(platInfo)+1) + platInfo
 						else:
 							pSpace = self.wrapwidth - len(destInfo) + 2
 							pAlign = pSpace - len(platInfo)
