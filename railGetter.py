@@ -122,9 +122,12 @@ def printScreen(res, wrapwidth):
 
 				print(" "*screenPadding + destInfo + platInfo, end="")
 				# wrap the string to a max number of characters. Returns a
-				# list of strings representing each line's output to print
+				# list of strings representing each line's output to print.
+				# Keep calling points 1 char to the left of a 2 char platform
+				# title showing 'On time', by wrapping to width of program -
+				# screen padding applied to left side - 16 chars
 				wrappedText = textwrap.wrap(toPrint, 
-					wrapwidth - (2*screenPadding))
+					wrapwidth - screenPadding - 16)
 				for line in wrappedText:
 					print(" "*screenPadding + line)
 
