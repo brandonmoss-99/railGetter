@@ -60,124 +60,171 @@ class railGetter:
 			time.sleep(self.delay)
 
 
-def printScreen(res, wrapwidth):
+class screen():
+	#def __init__(self):
 
-	# try to output all of the train information, or output a message
-	# if there is an attribute warning (no info/no trains running)
-	if res is not None:
-		try:
-			# get the list of train services
-			services = res.trainServices.service
+	def clearScreen(self):
+		print("\u001b[H", end="") # move cursor to top left (1,1)
+		print("\u001b[0J", end="") # clear screen after cursor (whole screen)
 
-			# for each service, get the calling points list and print
-			# the platform, time and status (on-time/delayed), train
-			# operator and the stations along the service
-			for i in range(0, len(services)):
-				destInfo = ""
-				platInfo = ""
-				toPrint = ""
-				screenPadding = 6
+	def printTop(self, t, wrapwidth, res, colon):
+		stationNameLength = len(res.locationName)
 
-				callingPoints = (services[i].subsequentCallingPoints.
-					callingPointList)
-				destInfo += ("\n" + str(services[i].std) + " to " +
-					str(services[i].destination.location[0].locationName))
-				if isinstance(services[i].destination.location[0].via, str):
-					destInfo += (" " + 
-						str(services[i].destination.location[0].via))
-				destInfo += (" (" + str(services[i].operator) + ") ")
+		# get character spaces left to pad with '=' by removing length of the
+		# station name/time and the other characters also displayed on the line
+		freeSpaceStation = wrapwidth - stationNameLength - 15
+		freeSpaceTime = wrapwidth - 10
 
-				# if the platform number is a string, print it, otherwise just
-				# print '-' to represent N/A, unknown or other 
-				if isinstance(services[i].platform, str):
-					platInfo += ("Plat " + str(services[i].platform) + " ")
-				else:
-					platInfo += ("Plat - ")
-				if services[i].etd != "On time":
-					platInfo += ("Exp: ")
-				platInfo += str(services[i].etd + "\n")
+		# try to print so the title and time are centered, but if not possible
+		# then print the extra character on the right side of the line
+		if freeSpaceStation % 2 == 0:
+			print("="*int(freeSpaceStation/2), "RAILGETTER -",
+				res.locationName.upper(),"="*int(freeSpaceStation/2))
+		else:
+			print("="*int((freeSpaceStation-1)/2), "RAILGETTER -",
+				res.locationName.upper(),"="*int((freeSpaceStation+1)/2))
+		if freeSpaceTime % 2 == 0:
+			if colon:
+				print("="*int(freeSpaceTime/2), time.strftime("%H:%M:%S", t),
+				"="*int(freeSpaceTime/2))
+			else:
+				print("="*int(freeSpaceTime/2), time.strftime("%H:%M %S", t),
+				"="*int(freeSpaceTime/2))
+		else:
+			if colon:
+				print("="*int((freeSpaceTime-1)/2), time.strftime("%H:%M:%S", t),
+				"="*int((freeSpaceTime+1)/2))
+			else:
+				print("="*int((freeSpaceTime-1)/2), time.strftime("%H:%M %S", t),
+				"="*int((freeSpaceTime+1)/2))
 
-				# try and have the platform info on the same line as
-				# the time and destination, but move underneath if
-				# it will exceed the max width of the display
-				if(len(platInfo) + len(destInfo) > wrapwidth):
-					platInfo = "\n" + platInfo
-				else:
-					pSpace = wrapwidth - len(destInfo) + 2
-					pAlign = pSpace - len(platInfo)
-					platInfo = " "*pAlign + platInfo
-
-				toPrint += ("Calling at: ")
-				x = 0
-				# if more than 1 station, append each but the last to
-				# a string to be wrapped at the end
-				if len(callingPoints[0].callingPoint) > 1:
-					for x in range(0,
-						len(callingPoints[0].callingPoint)-1):
-							toPrint += (str(callingPoints[0].callingPoint[x].
-								locationName) + ", ")
-				# append the last/only service station to the string
-				toPrint += (str(callingPoints[0].callingPoint[-1].
-					locationName) + ".\n")
-
-				print(" "*screenPadding + destInfo + platInfo, end="")
-				# wrap the string to a max number of characters. Returns a
-				# list of strings representing each line's output to print.
-				# Keep calling points 1 char to the left of a 2 char platform
-				# title showing 'On time', by wrapping to width of program -
-				# screen padding applied to left side - 16 chars
-				wrappedText = textwrap.wrap(toPrint, 
-					wrapwidth - screenPadding - 16)
-				for line in wrappedText:
-					print(" "*screenPadding + line)
-
-				# get the number of coaches for each train service, 
-				# if available
-				if isinstance(
-					services[i].length,str) and services[i].length > 0:
-					print("This train has", services[i].length,
-					"coaches.")
-		except AttributeError:
-			print("There are no trains running at this station!")
-
-
-def printMessages(res, wrapwidth):
-	if res is not None:
-		try:
-			# get the list of important departure board messages
-			messages = res.nrccMessages.message
-			msgPadding = 10
-			print("\n")
-
-			for message in messages:
-				# get the message text
-				messageText = message._value_1
-
-				# replace any HTML p tags with newlines, as per OpenLDBWS's
-				# guidelines
-				for r in (("<P>", "\n"), ("<p>", "\n"), ("</P>", "\n"), 
-					("</p>", "\n")):
-					# *r means to unpack the contents of r, each list item
-					# is sent separately instead of together. i.e:
-					# (("<P>", "\n"), ("<p>", "\n")) will be sent as
-					# ("<P>", "\n") and then ("<p>", "\n") after, instead
-					# of as (("<P>", "\n"), ("<p>", "\n"))
-					messageText = messageText.replace(*r)
-
-				# use regex to strip any opening HTML a tags with blanks,
-				# as per OpenLDBWS's guidelines
-				messageText = re.sub(
-					r'<A\s+(?:[^>]*?\s+)?href=(["\'])(.*?)\1>',
-					"", messageText)
-				messageText = messageText.replace("</A>", "")
-
-				wrappedText = textwrap.wrap(messageText, wrapwidth
-					-(msgPadding*2))
-				for line in wrappedText:
-					print(" "*msgPadding + line.lstrip(' '))
+	def printMessages(self, res, wrapwidth):
+		if res is not None:
+			try:
+				# get the list of important departure board messages
+				messages = res.nrccMessages.message
+				msgPadding = 10
 				print("\n")
-		except:
-			print("Error printing station messages!")
+
+				for message in messages:
+					# get the message text
+					messageText = message._value_1
+
+					# replace any HTML p tags with newlines, as per OpenLDBWS's
+					# guidelines
+					for r in (("<P>", "\n"), ("<p>", "\n"), ("</P>", "\n"), 
+						("</p>", "\n")):
+						# *r means to unpack the contents of r, each list item
+						# is sent separately instead of together. i.e:
+						# (("<P>", "\n"), ("<p>", "\n")) will be sent as
+						# ("<P>", "\n") and then ("<p>", "\n") after, instead
+						# of as (("<P>", "\n"), ("<p>", "\n"))
+						messageText = messageText.replace(*r)
+
+					# use regex to strip any opening HTML a tags with blanks,
+					# as per OpenLDBWS's guidelines
+					messageText = re.sub(
+						r'<A\s+(?:[^>]*?\s+)?href=(["\'])(.*?)\1>',
+						"", messageText)
+					messageText = messageText.replace("</A>", "")
+
+					wrappedText = textwrap.wrap(messageText, wrapwidth
+						-(msgPadding*2))
+					for line in wrappedText:
+						print(" "*msgPadding + line.lstrip(' '))
+					print("\n")
+			except:
+				print("Error printing station messages!")
+
+	def printTrains(self, res, wrapwidth):
+		# try to output all of the train information, or output a message
+		# if there is an attribute warning (no info/no trains running)
+		if res is not None:
+			try:
+				# get the list of train services
+				services = res.trainServices.service
+			except AttributeError:
+				print("There are no trains running at this station!")
+			else:
+				# for each service, get the calling points list and print
+				# the platform, time and status (on-time/delayed), train
+				# operator and the stations along the service
+				try:
+					for i in range(0, len(services)):
+						destInfo = ""
+						platInfo = ""
+						toPrint = ""
+						screenPadding = 6
+
+						callingPoints = (services[i].subsequentCallingPoints.
+							callingPointList)
+						destInfo += ("\n" + str(services[i].std) + " to " +
+							str(services[i].destination.location[0].locationName))
+						if isinstance(services[i].destination.location[0].via, str):
+							destInfo += (" " + 
+								str(services[i].destination.location[0].via))
+						destInfo += (" (" + str(services[i].operator) + ") ")
+
+						# if the platform number is a string, print it, otherwise just
+						# print '-' to represent N/A, unknown or other 
+						if isinstance(services[i].platform, str):
+							platInfo += ("Plat " + str(services[i].platform) + " ")
+						else:
+							platInfo += ("Plat - ")
+						if services[i].etd != "On time":
+							platInfo += ("Exp: ")
+						platInfo += str(services[i].etd + "\n")
+
+						# try and have the platform info on the same line as
+						# the time and destination, but move underneath if
+						# it will exceed the max width of the display
+						if(len(platInfo) + len(destInfo) > wrapwidth):
+							platInfo = "\n" + platInfo
+						else:
+							pSpace = wrapwidth - len(destInfo) + 2
+							pAlign = pSpace - len(platInfo)
+							platInfo = " "*pAlign + platInfo
+
+						toPrint += ("Calling at: ")
+						x = 0
+						# if more than 1 station, append each but the last to
+						# a string to be wrapped at the end
+						if len(callingPoints[0].callingPoint) > 1:
+							for x in range(0,
+								len(callingPoints[0].callingPoint)-1):
+									toPrint += (str(callingPoints[0].callingPoint[x].
+										locationName) + ", ")
+						# append the last/only service station to the string
+						toPrint += (str(callingPoints[0].callingPoint[-1].
+							locationName) + ".\n")
+
+						print(" "*screenPadding + destInfo + platInfo, end="")
+						# wrap the string to a max number of characters. Returns a
+						# list of strings representing each line's output to print.
+						# Keep calling points 1 char to the left of a 2 char platform
+						# title showing 'On time', by wrapping to width of program -
+						# screen padding applied to left side - 16 chars
+						wrappedText = textwrap.wrap(toPrint, 
+							wrapwidth - screenPadding - 16)
+						for line in wrappedText:
+							print(" "*screenPadding + line)
+
+						# get the number of coaches for each train service, 
+						# if available
+						if isinstance(
+							services[i].length,str) and services[i].length > 0:
+							print("This train has", services[i].length,
+							"coaches.")
+				except:
+					print("Error parsing data!")
+
+			# print blank line at bottom for spacing
+			print()
+
+	def printBottom(self, wrapwidth):
+		print("="*wrapwidth)
+
+
 
 
 def checkIfMessages(res):
@@ -187,41 +234,6 @@ def checkIfMessages(res):
 			return True if len(res.nrccMessages.message) > 0 else False
 		except:
 			return False
-
-
-def resetScreen(t, wrapwidth, res, colon):
-	stationNameLength = len(res.locationName)
-
-	# get character spaces left to pad with '=' by removing length of the
-	# station name/time and the other characters also displayed on the line
-	freeSpaceStation = wrapwidth - stationNameLength - 15
-	freeSpaceTime = wrapwidth - 10
-
-	print("\u001b[H", end="") # move cursor to top left (1,1)
-	print("\u001b[0J", end="") # clear screen after cursor (whole screen)
-
-	# try to print so the title and time are centered, but if not possible
-	# then print the extra character on the right side of the line
-	if freeSpaceStation % 2 == 0:
-		print("="*int(freeSpaceStation/2), "RAILGETTER -",
-			res.locationName.upper(),"="*int(freeSpaceStation/2))
-	else:
-		print("="*int((freeSpaceStation-1)/2), "RAILGETTER -",
-			res.locationName.upper(),"="*int((freeSpaceStation+1)/2))
-	if freeSpaceTime % 2 == 0:
-		if colon:
-			print("="*int(freeSpaceTime/2), time.strftime("%H:%M:%S", t),
-			"="*int(freeSpaceTime/2))
-		else:
-			print("="*int(freeSpaceTime/2), time.strftime("%H:%M %S", t),
-			"="*int(freeSpaceTime/2))
-	else:
-		if colon:
-			print("="*int((freeSpaceTime-1)/2), time.strftime("%H:%M:%S", t),
-			"="*int((freeSpaceTime+1)/2))
-		else:
-			print("="*int((freeSpaceTime-1)/2), time.strftime("%H:%M %S", t),
-			"="*int((freeSpaceTime+1)/2))
 
 
 def getHelp():
@@ -289,6 +301,8 @@ if __name__ == '__main__':
 		p = Process(target=R_getter.run, args=())
 		p.start() # start the thread
 
+		tScreen = screen() # create new terminal screen
+
 		# wait x seconds when the program is started until the first info
 		# is displayed, to make sure some data has been recieved before trying
 		# to process and display the data response. 
@@ -313,15 +327,17 @@ if __name__ == '__main__':
 				if pipe1.poll():
 					res = pipe1.recv() # Get the results from the pipe
 
+				tScreen.clearScreen()
 				# alternate the colon display each refresh
 				if colon:
-					resetScreen(t, wrapwidth, res, colon)
+					tScreen.printTop(t, wrapwidth, res, colon)
 					colon = False
 				else:
-					resetScreen(t, wrapwidth, res, colon)
+					tScreen.printTop(t, wrapwidth, res, colon)
 					colon = True
 
-				printScreen(res, wrapwidth)
+				tScreen.printTrains(res, wrapwidth)
+				tScreen.printBottom(wrapwidth)
 				time.sleep(1)
 
 			if checkIfMessages(res):
@@ -332,14 +348,17 @@ if __name__ == '__main__':
 					if pipe1.poll():
 						res = pipe1.recv() # Get the results from the pipe
 
+					tScreen.clearScreen()
 					# alternate the colon display each refresh
 					if colon:
-						resetScreen(t, wrapwidth, res, colon)
+						tScreen.printTop(t, wrapwidth, res, colon)
 						colon = False
 					else:
-						resetScreen(t, wrapwidth, res, colon)
+						tScreen.printTop(t, wrapwidth, res, colon)
 						colon = True
-					printMessages(res, wrapwidth)
+
+					tScreen.printMessages(res, wrapwidth)
+					tScreen.printBottom(wrapwidth)
 					time.sleep(1)
 				
 	elif LDB_TOKEN is None:
